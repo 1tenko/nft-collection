@@ -102,6 +102,46 @@ const Home: NextPage = () => {
   };
 
   // starts the presale for the NFT collection
+  const startPresale = async () => {
+    try {
+      // We need a Signer here since this is a 'write' transaction.
+      const signer = await getProviderOrSigner(true);
+      // Create a new instance of the Contract with a Signer, which allows
+      // update methods
+      const whitelistContract = new Contract(NFT_CONTRACT_ADDRESS, abi, signer);
+      // start the presale from the contract
+      const tx = await whitelistContract.startPresale();
+      setLoading(true);
+      // wait for the transaction to get mined
+      await tx.wait();
+      setLoading(false);
+      // set presale started to true
+      await checkIfPresaleIsStarted();
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  // calls the contract to retrieve the owner
+  const getOwner = async () => {};
+
+  // checks if the presale has started by querying the 'presaleStarted' variable in the contract
+  const checkIfPresaleStarted = async () => {
+    try {
+      // no need for signer here as we are only reading state from the blockchain
+      const provider = await getProviderOrSigner();
+      const nftContract = new Contract(NFT_CONTRACT_ADDRESS, abi, provider);
+      // call the presaleStarted from the contract
+      const _presaleStarted = await nftContract.presaleStarted();
+      if (!_presaleStarted) {
+        await getOwner();
+      }
+      setPresaleStarted(_presaleStarted);
+      return _presaleStarted;
+    } catch (err) {
+      console.error(err);
+    }
+  };
 
   return (
     <div>
