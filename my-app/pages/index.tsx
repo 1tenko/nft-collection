@@ -6,6 +6,7 @@ import React, { useEffect, useRef, useState } from "react";
 import Web3Modal from "web3modal";
 import { abi, NFT_CONTRACT_ADDRESS } from "../constants";
 import styles from "../styles/Home.module.css";
+import Core from "web3modal";
 
 const Home: NextPage = () => {
   // keeps track of whether the user's wallet is connected or not
@@ -202,6 +203,104 @@ const Home: NextPage = () => {
     }
   };
 
+  // when 'walletConnected' changes, this effect will be called
+  useEffect(() => {
+    // if wallet is not connected, create new instance of Web3Modal and connect the metamask wallet
+    if (!walletConnected) {
+      // assign the Web3Modal class to the reference object by setting it's 'current' value
+      // 'current' value is persisted throughout as long as the page is open
+      web3ModalRef.current = new Web3Modal({
+        network: "rinkeby",
+        providerOptions: {},
+        disableInjectedProvider: false,
+      });
+      connectWallet();
+
+      // check if presale has started and ended
+      const _presaleStarted = checkIfPresaleStarted();
+      if (_presaleStarted) {
+        checkIfPresaleEnded();
+      }
+
+      getTokenIdsMinted();
+
+      // sets an interval which gets called every 5 seconds to check presale has ended
+      const presaleEndedInterval = setInterval(async () => {
+        const _presaleStarted = await checkIfPresaleStarted();
+        if (_presaleStarted) {
+          const _presaleEnded = await checkIfPresaleEnded();
+          if (_presaleEnded) {
+            clearInterval(presaleEndedInterval);
+          }
+        }
+      }, 5 * 1000);
+
+      // set an interval to get the number of token Ids minted every 5 seconds
+      setInterval(async () => {
+        await getTokenIdsMinted();
+      }, 5 * 1000);
+    }
+  }, [walletConnected]);
+
+  // returns a button based on the state of the dapp
+  const renderButton = () => {
+    // if wallet is not connected return a button which allows them to connect their wallet
+    if (!walletConnected) {
+      return (
+        <button onClick={connectWallet} className={styles.button}>
+          Connect your wallet
+        </button>
+      );
+    }
+
+    // if we are currently waiting for somehting, return a loading button
+    if (loading) {
+      return <button className={styles.button}>Loading...</button>;
+    }
+
+    // if connected user is the owner and presale hasnt started yet, allow them to start the presale
+    if (isOwner && !presaleStarted) {
+      return (
+        <button className={styles.button} onClick={startPresale}>
+          Start Presale!
+        </button>
+      );
+    }
+
+    // If connected user is not the owner but presale hasn't started yet, tell them that
+    if (!presaleStarted) {
+      return (
+        <div>
+          <div className={styles.description}>Presale has not started!</div>
+        </div>
+      );
+    }
+
+    // If presale started, but hasn't ended yet, allow for minting during the presale period
+    if (presaleStarted && !presaleEnded) {
+      return (
+        <div>
+          <div className={styles.description}>
+            Presale has started!!! If your address is whitelisted, Mint a Crypto
+            Dev 🥳
+          </div>
+          <button className={styles.button} onClick={presaleMint}>
+            Presale Mint 🚀
+          </button>
+        </div>
+      );
+    }
+
+    // If presale started and has ended, its time for public minting
+    if (presaleStarted && presaleEnded) {
+      return (
+        <button className={styles.button} onClick={publicMint}>
+          Public Mint 🚀
+        </button>
+      );
+    }
+  };
+
   return (
     <div>
       <Head>
@@ -218,7 +317,7 @@ const Home: NextPage = () => {
           <div className={styles.description}>
             {tokenIdsMinted}/20 have been minted
           </div>
-          {/* {renderButton()} */}
+          {renderButton()}
         </div>
         <div>
           <img className={styles.image} src="./0CDNFT.svg" />
