@@ -1,18 +1,28 @@
 import { ethers } from "hardhat";
+require("dotenv").config({ path: ".env" });
+import { WHITELIST_CONTRACT_ADDRESS, METADATA_URL } from "../constants";
 
 async function main() {
-  const currentTimestampInSeconds = Math.round(Date.now() / 1000);
-  const ONE_YEAR_IN_SECS = 365 * 24 * 60 * 60;
-  const unlockTime = currentTimestampInSeconds + ONE_YEAR_IN_SECS;
+  // address of the whitelist contract deployed
+  const whitelistContract = WHITELIST_CONTRACT_ADDRESS;
+  // url from where we can extract the metadata for a Crypto Dev NFT
+  const metadataURL = METADATA_URL;
 
-  const lockedAmount = ethers.utils.parseEther("1");
+  // A ContractFactory in ethers.js is an abstraction used to deploy new smart contracts,
+  // so cryptoDevsContract here is a factory for instances of our CryptoDevs contract.
+  const cryptoDevsContract = await ethers.getContractFactory("CryptoDevs");
 
-  const Lock = await ethers.getContractFactory("Lock");
-  const lock = await Lock.deploy(unlockTime, { value: lockedAmount });
+  // deploy the contract
+  const deployedCryptoDevsContract = await cryptoDevsContract.deploy(
+    metadataURL,
+    whitelistContract
+  );
 
-  await lock.deployed();
-
-  console.log("Lock with 1 ETH deployed to:", lock.address);
+  // print address of deployed contract
+  console.log(
+    "Crypto Devs Contract Address: ",
+    deployedCryptoDevsContract.address
+  );
 }
 
 // We recommend this pattern to be able to use async/await everywhere

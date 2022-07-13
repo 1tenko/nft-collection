@@ -148,6 +148,7 @@
     "diffie-hellman": "^5.0.3",
     "dir-glob": "^3.0.1",
     "dom-walk": "^0.1.2",
+    "dotenv": "^16.0.1",
     "duplexer3": "^0.1.5",
     "ecc-jsbn": "^0.1.2",
     "ee-first": "^1.1.1",
