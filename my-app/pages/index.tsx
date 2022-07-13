@@ -17,7 +17,7 @@ const Home: NextPage = () => {
   // set to true when we are waiting for a transaction to get mined
   const [loading, setLoading] = useState(false);
   // checks if the current connected metamask wallet is the owner of the contract
-  const [isOwner, setisOwner] = useState(false);
+  const [isOwner, setIsOwner] = useState(false);
   // keeps track of the number of tokenIds that have been minted
   const [tokenIdsMinted, setTokenIdsMinted] = useState("0");
   // reference to the Web3 Modal (used for connecting metamask) which persists as long as the page is open
@@ -116,14 +116,32 @@ const Home: NextPage = () => {
       await tx.wait();
       setLoading(false);
       // set presale started to true
-      await checkIfPresaleIsStarted();
+      await checkIfPresaleStarted();
     } catch (err) {
       console.error(err);
     }
   };
 
   // calls the contract to retrieve the owner
-  const getOwner = async () => {};
+  const getOwner = async () => {
+    try {
+      // no need for signer as we are only reading state from the blockchain
+      const provider = await getProviderOrSigner();
+      const nftContract = new Contract(NFT_CONTRACT_ADDRESS, abi, provider);
+
+      // call the owner function from the contract
+      const _owner = await nftContract.owner();
+      // get signer now to extract the address of the currently connected metamask account
+      const signer = await getProviderOrSigner(true);
+      // get address associated to the signer which is connected to metamask
+      const address = await signer.getAddress();
+      if (address.toLowerCase() === _owner.toLowerCase()) {
+        setIsOwner(true);
+      }
+    } catch (err) {
+      console.error(err);
+    }
+  };
 
   // checks if the presale has started by querying the 'presaleStarted' variable in the contract
   const checkIfPresaleStarted = async () => {
