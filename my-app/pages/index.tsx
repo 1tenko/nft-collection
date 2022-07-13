@@ -158,6 +158,47 @@ const Home: NextPage = () => {
       return _presaleStarted;
     } catch (err) {
       console.error(err);
+      return false;
+    }
+  };
+
+  // checks if the presale has ended by querying the 'presaleEnded' variable in the contract
+  const checkIfPresaleEnded = async () => {
+    try {
+      // no need for signer as we are only reading state from the blockchain
+      const provider = await getProviderOrSigner();
+      const nftContract = new Contract(NFT_CONTRACT_ADDRESS, abi, provider);
+
+      const _presaleEnded = await nftContract.presaleEnded();
+      // _presaleEnded is a BigNumber, so we the lt (less than function) instead of '<'
+      // Date.now()/1000 returns the current time in seconds
+      // we compare if the _presaleEnded timestamp is less than the current time
+      // which then means the presale has ended
+      const hasEnded = _presaleEnded.lt(Math.floor(Date.now() / 1000));
+      if (hasEnded) {
+        setPresaleEnded(true);
+      } else {
+        setPresaleEnded(false);
+      }
+      return hasEnded;
+    } catch (err) {
+      console.error(err);
+      return false;
+    }
+  };
+
+  // gets the number of tokenIds that have been minted
+  const getTokenIdsMinted = async () => {
+    try {
+      const provider = await getProviderOrSigner();
+
+      const nftContract = new Contract(NFT_CONTRACT_ADDRESS, abi, provider);
+      const _tokenIds = await nftContract.tokenIds();
+
+      // _tokenIds is a BigNumber so we need to convert it to a string
+      setTokenIdsMinted(_tokenIds.toString());
+    } catch (err) {
+      console.error(err);
     }
   };
 
