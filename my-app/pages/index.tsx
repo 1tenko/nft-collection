@@ -8,6 +8,21 @@ import { abi, NFT_CONTRACT_ADDRESS } from "../constants";
 import styles from "../styles/Home.module.css";
 
 const Home: NextPage = () => {
+  // keeps track of whether the user's wallet is connected or not
+  const [walletConnected, setWalletConnected] = useState(false);
+  // keeps track of whether the presale has started or not
+  const [presaleStarted, setPresaleStarted] = useState(false);
+  // keeps track of whether the presale ended
+  const [presaleEnded, setPresaleEnded] = useState(false);
+  // set to true when we are waiting for a transaction to get mined
+  const [loading, setLoading] = useState(false);
+  // checks if the current connected metamask wallet is the owner of the contract
+  const [isOwner, setisOwner] = useState(false);
+  // keeps track of the number of tokenIds that have been minted
+  const [tokenIdsMinted, setTokenIdsMinted] = useState("0");
+  // reference to the Web3 Modal (used for connecting metamask) which persists as long as the page is open
+  const web3ModalRef = useRef();
+
   return (
     <div>
       <Head>
